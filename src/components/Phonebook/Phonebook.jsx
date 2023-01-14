@@ -1,13 +1,27 @@
 import { nanoid } from 'nanoid';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { useState } from 'react';
-
-import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from 'redux/contacts/contactsSlice';
+import { getContacts } from 'redux/contacts/contacts-selectors';
 
 import styles from './Phonebook.module.css';
 
-export const Phonebook = ({ addContact }) => {
+Notify.init({
+  useIcon: false,
+  fontSize: '20px',
+  position: 'right-top',
+  width: '350px',
+  height: '35px',
+  clickToClose: true,
+});
+
+export const Phonebook = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+
+  const dispatch = useDispatch(getContacts);
+  const contacts = useSelector(getContacts);
 
   const inputHandler = event => {
     if (event.target.name === 'name') {
@@ -21,11 +35,19 @@ export const Phonebook = ({ addContact }) => {
 
   const submitHandler = event => {
     event.preventDefault();
+    const rename = contacts.find(
+      contacts => contacts.name.toLowerCase() === name.toLowerCase()
+    );
+    if (rename) {
+      Notify.warning(`Oppps.. ${name} is already in contacts`);
+      event.target.reset();
+      return;
+    }
 
     const id = nanoid();
     const newContact = { id: id, name: name, number: number };
 
-    addContact(newContact);
+    dispatch(addContact(newContact));
     event.target.reset();
   };
 
@@ -64,8 +86,4 @@ export const Phonebook = ({ addContact }) => {
       </div>
     </form>
   );
-};
-
-Phonebook.propTypes = {
-  addContact: PropTypes.func.isRequired,
 };
